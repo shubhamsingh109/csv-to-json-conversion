@@ -27,60 +27,63 @@ namespace Demo
             double[] kerala = new double[22];
             double[] tamilNadu = new double[22];
             double[] andharaPradesh = new double[22];
-        StreamReader read = new StreamReader(new FileStream(@"D:\Demo\Production-Department_of_Agriculture.csv", FileMode.Open));//csv file to read
-            StreamWriter oilseedWrite = new StreamWriter(new FileStream(@"D:\Demo\Oilseed.json", FileMode.OpenOrCreate, FileAccess.Write));//oilseed file to write oilseed json
-            StreamWriter foodgrainsWrite = new StreamWriter(new FileStream(@"D:\Demo\Foodgrains.json", FileMode.OpenOrCreate, FileAccess.Write));//foograin file to write foodgrain json
-            StreamWriter commercialWrite = new StreamWriter(new FileStream(@"D:\Demo\Commercial.json", FileMode.OpenOrCreate, FileAccess.Write));//comercial file to write commercial json
-            StreamWriter southstateWrite = new StreamWriter(new FileStream(@"D:\Demo\SouthState.json", FileMode.OpenOrCreate, FileAccess.Write));//south state file to write state json
-            string[] heading = read.ReadLine().Split(',');//reading heading
-            double[] counter = new double[22];//array to store aggregate value for each year                     
-            while (!read.EndOfStream)
+            double[] counter = new double[22];//array to store aggregate value for each year 
+            //csv file to read  
+            try
             {
-                str = read.ReadLine().Split(',');//reading data line by line
-                if (str[0].Contains("Oilseeds")&&(((!str[0].Contains("Yield"))&&(!str[0].Contains("Foodgrains Production")))&&(!str[0].Contains("Area"))))//filter for oilseed json
+                using (StreamReader read = new StreamReader(new FileStream(@"D:\Demo\Production-Department_of_Agriculture.csv", FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    double value = (str[24] == "NA") ? double.Parse("0") : double.Parse(str[24]);
-                    oilseedDict.Add(str[0], value);
-                }
-                else if (str[0].Contains("Agricultural Production Foodgrains")&&((((!str[0].Contains("Area"))&&(!str[0].Contains("Foodgrains Production")))&&(!str[0].Contains("Yield")))&&(!str[0].Contains("Volume"))))//filetr for foodgrain json
-                {
-                    double value = (str[24] == "NA") ? double.Parse("0") : double.Parse(str[24]);
-                    foodgrainDict.Add(str[0],value);
-                }
-                else  if (str[0].Contains("Commercial"))//filter for commercial json
-                {
-                    for (int i = 4; i <= 25; i++)
+                    string[] heading = read.ReadLine().Split(',');//reading heading                                      
+                    while (!read.EndOfStream)
                     {
-                        counter[i - 4] += (str[i] == "NA") ? double.Parse("0") : double.Parse(str[i]);
+                        str = read.ReadLine().Split(',');//reading data line by line
+                        if (str[0].Contains("Oilseeds") && (((!str[0].Contains("Yield")) && (!str[0].Contains("Foodgrains Production"))) && (!str[0].Contains("Area"))))//filter for oilseed json
+                        {
+                            double value = (str[24] == "NA") ? double.Parse("0") : double.Parse(str[24]);
+                            oilseedDict.Add(str[0], value);
+                        }
+                        else if (str[0].Contains("Agricultural Production Foodgrains") && ((((!str[0].Contains("Area")) && (!str[0].Contains("Foodgrains Production"))) && (!str[0].Contains("Yield"))) && (!str[0].Contains("Volume"))))//filetr for foodgrain json
+                        {
+                            double value = (str[24] == "NA") ? double.Parse("0") : double.Parse(str[24]);
+                            foodgrainDict.Add(str[0], value);
+                        }
+                        else if (str[0].Contains("Commercial"))//filter for commercial json
+                        {
+                            for (int i = 4; i <= 25; i++)
+                            {
+                                counter[i - 4] += (str[i] == "NA") ? double.Parse("0") : double.Parse(str[i]);
+                            }
+                        }
+                        else if ((((str[0].Contains("Rice Volume Tamil Nadu")) || (str[0].Contains("Rice Volume Andhra Pradesh"))) || (str[0].Contains("Rice Volume Karnataka"))) || (str[0].Contains("Rice Volume Kerala")))//filetr for state json
+                        {
+                            if (str[0].Contains("Tamil Nadu"))
+                            {
+                                tamilNadu = StoreValueInStateArray();
+                            }
+                            else if (str[0].Contains("Karnataka"))
+                            {
+                                karnataka = StoreValueInStateArray();
+                            }
+                            else if (str[0].Contains("Andhra Pradesh"))
+                            {
+                                andharaPradesh = StoreValueInStateArray();
+                            }
+                            else if (str[0].Contains("Kerala"))
+                            {
+                                kerala = StoreValueInStateArray();
+                            }
+                        }
                     }
                 }
-                else if ((((str[0].Contains("Rice Volume Tamil Nadu")) || (str[0].Contains("Rice Volume Andhra Pradesh"))) || (str[0].Contains("Rice Volume Karnataka"))) || (str[0].Contains("Rice Volume Kerala")))//filetr for state json
-                {
-                    if (str[0].Contains("Tamil Nadu"))
-                    {
-                      tamilNadu=  StoreValueInStateArray();                                      
-                    }
-                    else if (str[0].Contains("Karnataka"))
-                    {
-                         karnataka = StoreValueInStateArray();
-                    }
-                    else if (str[0].Contains("Andhra Pradesh"))
-                    {
-                      andharaPradesh=  StoreValueInStateArray();
-                    }
-                    else if (str[0].Contains("Kerala"))
-                    {
-                       kerala= StoreValueInStateArray();
-                                      
-                    }                                 
-                }         
             }
-            for (int i = 1993; i <= 2014; i++)
+            catch(IOException e)
             {
-                states.Append("{\"Year\":"+ "\"" + i + "\","+ "\"Kerala\":"+ kerala[i - 1993] + ","+ "\"Tamil_Nadu\":"+ tamilNadu[i - 1993] + ","+ "\"Karnataka\":"+ karnataka[i - 1993] + ","+ "\"Andhara_Pradesh\":"+ andharaPradesh[i - 1993]+ "},");                                          
-            }           
+                Console.WriteLine("File is already in use");
+            }
+         
             for (int i=1993; i<=2014; i++)//iteration for aggregate value
             {
+                states.Append("{\"Year\":" + "\"" + i + "\"," + "\"Kerala\":" + kerala[i - 1993] + "," + "\"Tamil_Nadu\":" + tamilNadu[i - 1993] + "," + "\"Karnataka\":" + karnataka[i - 1993] + "," + "\"Andhara_Pradesh\":" + andharaPradesh[i - 1993] + "},");
                 commercial.Append("{\"Year\":"+i+","+"\"Aggregate_Value\":"+counter[i-1993]+"}"+",");
             }
             var oilseedSortedDict = from oilseedEntry in oilseedDict orderby oilseedEntry.Value descending select oilseedEntry;//descending order oilseed json
@@ -101,17 +104,27 @@ namespace Demo
             oilseed.Append("]");
             foodgrain.Length--;
             foodgrain.Append("]");
-            oilseedWrite.Write(oilseed);
-            foodgrainsWrite.Write(foodgrain);
-            commercialWrite.Write(commercial);
-            southstateWrite.Write(states);
-            read.Dispose();
-            oilseedWrite.Flush();
-            foodgrainsWrite.Flush();
-            commercialWrite.Flush();
-            southstateWrite.Flush();
+            //oilseed file to write oilseed json
+            using (StreamWriter oilseedWrite = new StreamWriter(new FileStream(@"D:\Demo\Oilseed.json", FileMode.OpenOrCreate, FileAccess.Write)))
+            {
+                oilseedWrite.Write(oilseed);
+            }
+            //foograin file to write foodgrain json
+            using (StreamWriter foodgrainsWrite = new StreamWriter(new FileStream(@"D:\Demo\Foodgrains.json", FileMode.OpenOrCreate, FileAccess.Write)))
+            {
+                foodgrainsWrite.Write(foodgrain);
+            }
+            //comercial file to write commercial json
+            using (StreamWriter commercialWrite = new StreamWriter(new FileStream(@"D:\Demo\Commercial.json", FileMode.OpenOrCreate, FileAccess.Write)))
+            {
+                commercialWrite.Write(commercial);
+            }
+            //south state file to write state json
+            using (StreamWriter southstateWrite = new StreamWriter(new FileStream(@"D:\Demo\SouthState.json", FileMode.OpenOrCreate, FileAccess.Write)))
+            {
+                southstateWrite.Write(states);
+            } 
         }
-
         public static double[] StoreValueInStateArray()
         {
             double[] arr = new double[22];
